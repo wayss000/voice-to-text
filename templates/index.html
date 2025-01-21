@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语音转文字</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>语音转文字</h1>
+        <div class="record-area">
+            <button id="recordBtn" class="record-button">
+                <span class="record-icon"></span>
+                <span class="record-text">开始录音</span>
+            </button>
+            <div class="record-time">
+                <span id="recordTime">00:00</span>
+            </div>
+            <div class="record-tip">
+                点击按钮开始录音，再次点击结束录音并开始转换
+            </div>
+        </div>
+
+        <div class="progress-area">
+            <div id="progress" class="progress-bar" style="display: none;">
+                <div class="progress-inner"></div>
+            </div>
+        </div>
+
+        <div class="result-area">
+            <div class="result-header">
+                <span>转换结果</span>
+                <button id="copyBtn" onclick="copyResult()" class="secondary-button">
+                    复制文本
+                </button>
+            </div>
+            <textarea id="result" readonly placeholder="转换后的文本将显示在这里..."></textarea>
+        </div>
+
+        <div id="status" class="status-message"></div>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
