@@ -328,6 +328,6 @@ def convert():
 if __name__ == '__main__':
     app.run(
         host=Config.get('app.host', '0.0.0.0'),
-        port=Config.get('app.port', 5001),
+        port=Config.get('app.port', 5000),
         debug=Config.get('app.debug', False)
     )
