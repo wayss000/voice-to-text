@@ -7,6 +7,9 @@ let isRecording = false;
 let recordingTimer;
 let startTime;
 
+// 添加历史记录相关功能
+let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+
 document.getElementById('recordBtn').addEventListener('click', toggleRecording);
 
 // 将音频数据转换为WAV格式
@@ -172,6 +175,13 @@ async function convertAudio(wavBlob) {
             if (result.success) {
                 document.getElementById('result').value = result.text;
                 showStatus('转换成功！');
+                
+                // 添加到历史记录
+                addRecord({
+                    timestamp: result.timestamp || new Date().toISOString(),
+                    text: result.text,
+                    success: true
+                });
             } else {
                 throw new Error(result.error || '转换失败');
             }
@@ -181,6 +191,14 @@ async function convertAudio(wavBlob) {
     } catch (err) {
         console.error('转换错误:', err);
         showStatus(err.message || '转换失败，请重试');
+        
+        // 添加到历史记录
+        addRecord({
+            timestamp: new Date().toISOString(),
+            text: '',
+            success: false,
+            error: err.message
+        });
     } finally {
         progress.style.display = 'none';
     }
@@ -199,4 +217,40 @@ function showStatus(message) {
     setTimeout(() => {
         status.textContent = '';
     }, 3000);
-} 
+}
+
+function updateHistory() {
+    console.log('Current history:', history);
+    const historyList = document.getElementById('historyList');
+    historyList.innerHTML = history.map(record => `
+        <div class="record-card">
+            <div class="record-time">${new Date(record.timestamp).toLocaleString()}</div>
+            <div class="record-text">${record.text}</div>
+            <div class="record-status ${record.success ? '' : 'error'}">
+                ${record.success ? '转换成功' : '转换失败: ' + record.error}
+            </div>
+            <button class="copy-btn" onclick="copyHistoryText('${record.text}')">复制文本</button>
+        </div>
+    `).join('');
+}
+
+function copyHistoryText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showStatus('文本已复制到剪贴板');
+    });
+}
+
+function addRecord(record) {
+    console.log('Adding record:', record);
+    history.unshift(record);
+    if (history.length > 20) { // 限制保存最近20条记录
+        history.pop();
+    }
+    localStorage.setItem('conversionHistory', JSON.stringify(history));
+    updateHistory();
+}
+
+// 页面加载时初始化历史记录
+document.addEventListener('DOMContentLoaded', function() {
+    updateHistory();
+}); 

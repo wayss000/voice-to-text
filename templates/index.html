@@ -5,6 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>语音转文字</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* 添加历史记录相关样式 */
+        .history-section {
+            margin-top: 30px;
+            padding: 20px;
+            border-top: 1px solid #eee;
+        }
+        .record-card {
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .record-time {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        .record-text {
+            margin: 10px 0;
+        }
+        .record-status {
+            font-size: 0.9em;
+            color: #28a745;
+        }
+        .record-status.error {
+            color: #dc3545;
+        }
+        .copy-btn {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .copy-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -39,7 +80,14 @@
         </div>
 
         <div id="status" class="status-message"></div>
+
+        <!-- 添加历史记录部分 -->
+        <div class="history-section">
+            <h3>历史记录</h3>
+            <div id="historyList"></div>
+        </div>
     </div>
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html> 

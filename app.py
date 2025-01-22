@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 import websockets
 from enum import Enum
 from config import Config
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -269,32 +270,35 @@ def index():
 def convert():
     try:
         if 'audio' not in request.files:
-            return jsonify({'error': '没有收到音频文件'}), 400
+            return jsonify({
+                'success': False,
+                'error': '没有收到音频文件'
+            }), 400
         
         audio_file = request.files['audio']
-        temp_path = 'temp_audio_test.wav'  # 使用和官方示例相同的文件名
+        temp_path = 'temp_audio_test.wav'
         audio_file.save(temp_path)
         
         try:
-            # 直接使用官方示例的 test_one 函数
             from offical_demo import test_one
-            result_str = test_one()  # 返回的是 JSON 字符串
-            result = json.loads(result_str)  # 解析成 Python 对象
+            result_str = test_one()
+            result = json.loads(result_str)
             print(f"ASR Result: {result_str}")
             
             if result and isinstance(result, dict):
-                # 获取 result.result.payload_msg 中的内容
                 payload_msg = result.get('result', {}).get('payload_msg', {})
-                if payload_msg.get('code') == 1000:  # 成功状态码
+                if payload_msg.get('code') == 1000:
                     text = payload_msg.get('result', [{}])[0].get('text', '')
                     return jsonify({
                         'success': True,
-                        'text': text
+                        'text': text,
+                        'timestamp': datetime.now().isoformat()
                     })
             
             return jsonify({
                 'success': False,
-                'error': '转换失败'
+                'error': '转换失败',
+                'timestamp': datetime.now().isoformat()
             }), 500
             
         except Exception as e:
@@ -303,7 +307,8 @@ def convert():
             print(traceback.format_exc())
             return jsonify({
                 'success': False,
-                'error': str(e)
+                'error': str(e),
+                'timestamp': datetime.now().isoformat()
             }), 500
             
         finally:
@@ -315,7 +320,8 @@ def convert():
         print(f"Error: {str(e)}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
         }), 500
 
 # 如果有启动服务器的代码，也可以使用配置：
