@@ -12,9 +12,15 @@ from io import BytesIO
 from urllib.parse import urlparse
 import websockets
 from enum import Enum
-from config import VOLC_ACCESS_KEY, VOLC_SECRET_KEY, VOLC_APPID, VOLC_CLUSTER
+from config import Config
 
 app = Flask(__name__)
+
+# 使用 Config 类获取火山引擎配置
+VOLC_ACCESS_KEY = Config.get('volc.access_key')
+VOLC_SECRET_KEY = Config.get('volc.secret_key')
+VOLC_APPID = Config.get('volc.app_id')
+VOLC_CLUSTER = Config.get('volc.cluster')
 
 # 完整复制 offical_demo.py 的所有内容
 PROTOCOL_VERSION = 0b0001
@@ -312,5 +318,10 @@ def convert():
             'error': str(e)
         }), 500
 
+# 如果有启动服务器的代码，也可以使用配置：
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(
+        host=Config.get('app.host', '0.0.0.0'),
+        port=Config.get('app.port', 5001),
+        debug=Config.get('app.debug', False)
+    )
