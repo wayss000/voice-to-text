@@ -6,35 +6,55 @@
     <title>语音转文字</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        /* 添加历史记录相关样式 */
+        /* 历史记录相关样式 */
         .history-section {
             margin-top: 30px;
             padding: 20px;
             border-top: 1px solid #eee;
         }
-        .record-card {
+        .history-card {
             padding: 15px;
             margin: 10px 0;
             border: 1px solid #eee;
             border-radius: 5px;
             background-color: #f9f9f9;
         }
-        .record-time {
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .history-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
             color: #666;
             font-size: 0.9em;
-            margin-bottom: 5px;
         }
-        .record-text {
+        .history-time {
+            margin-right: 10px;
+        }
+        .history-text {
             margin: 10px 0;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 3px;
+            border: 1px solid #eee;
         }
-        .record-status {
+        .history-footer {
+            margin-top: 10px;
+            text-align: right;
+        }
+        .history-status {
             font-size: 0.9em;
             color: #28a745;
         }
-        .record-status.error {
+        .history-status.error {
             color: #dc3545;
         }
-        .copy-btn {
+        .history-copy-btn {
             padding: 5px 10px;
             background-color: #007bff;
             color: white;
@@ -42,8 +62,12 @@
             border-radius: 3px;
             cursor: pointer;
         }
-        .copy-btn:hover {
+        .history-copy-btn:hover {
             background-color: #0056b3;
+        }
+        .history-count {
+            color: #666;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -76,14 +100,17 @@
                     复制文本
                 </button>
             </div>
-            <textarea id="result" readonly placeholder="转换后的文本将显示在这里..."></textarea>
+            <textarea id="result" placeholder="转换后的文本将显示在这里..."></textarea>
         </div>
 
         <div id="status" class="status-message"></div>
 
         <!-- 添加历史记录部分 -->
         <div class="history-section">
-            <h3>历史记录</h3>
+            <div class="history-header">
+                <h3>历史记录</h3>
+                <span class="history-count">共 <span id="recordCount">0</span> 条记录</span>
+            </div>
             <div id="historyList"></div>
         </div>
     </div>

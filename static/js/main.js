@@ -10,6 +10,9 @@ let startTime;
 // 添加历史记录相关功能
 let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
 
+// 在文件开头添加一个变量来跟踪最新记录的ID
+let latestRecordId = 0;
+
 document.getElementById('recordBtn').addEventListener('click', toggleRecording);
 
 // 将音频数据转换为WAV格式
@@ -212,24 +215,46 @@ function copyResult() {
 }
 
 function showStatus(message) {
-    const status = document.getElementById('status');
-    status.textContent = message;
+    // 创建或获取 tooltip 元素
+    let tooltip = document.getElementById('tooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'tooltip';
+        tooltip.className = 'tooltip';
+        document.body.appendChild(tooltip);
+    }
+
+    // 设置消息并显示
+    tooltip.textContent = message;
+    tooltip.classList.add('show');
+
+    // 3秒后隐藏
     setTimeout(() => {
-        status.textContent = '';
-    }, 3000);
+        tooltip.classList.remove('show');
+    }, 2000);
 }
 
 function updateHistory() {
     console.log('Current history:', history);
     const historyList = document.getElementById('historyList');
+    const recordCount = document.getElementById('recordCount');
+    
+    // 更新记录数量
+    recordCount.textContent = history.length;
+    
+    // 更新历史记录列表
     historyList.innerHTML = history.map(record => `
-        <div class="record-card">
-            <div class="record-time">${new Date(record.timestamp).toLocaleString()}</div>
-            <div class="record-text">${record.text}</div>
-            <div class="record-status ${record.success ? '' : 'error'}">
-                ${record.success ? '转换成功' : '转换失败: ' + record.error}
+        <div class="history-card">
+            <div class="history-card-header">
+                <div class="history-time">${new Date(record.timestamp).toLocaleString()}</div>
+                <div class="history-status ${record.success ? '' : 'error'}">
+                    ${record.success ? '转换成功' : '转换失败: ' + record.error}
+                </div>
             </div>
-            <button class="copy-btn" onclick="copyHistoryText('${record.text}')">复制文本</button>
+            <div class="history-text">${record.text}</div>
+            <div class="history-footer">
+                <button class="history-copy-btn" onclick="copyHistoryText('${record.text}')">复制文本</button>
+            </div>
         </div>
     `).join('');
 }
@@ -242,15 +267,36 @@ function copyHistoryText(text) {
 
 function addRecord(record) {
     console.log('Adding record:', record);
+    record.id = ++latestRecordId; // 添加唯一ID
     history.unshift(record);
-    if (history.length > 20) { // 限制保存最近20条记录
+    if (history.length > 20) {
         history.pop();
     }
     localStorage.setItem('conversionHistory', JSON.stringify(history));
     updateHistory();
 }
 
-// 页面加载时初始化历史记录
+// 添加更新记录文本的函数
+function updateLatestRecordText(newText) {
+    if (history.length > 0) {
+        history[0].text = newText;
+        localStorage.setItem('conversionHistory', JSON.stringify(history));
+        updateHistory();
+    }
+}
+
+// 添加文本框变化的监听器
 document.addEventListener('DOMContentLoaded', function() {
+    const resultTextarea = document.getElementById('result');
+    let typingTimer;
+    
+    resultTextarea.addEventListener('input', function() {
+        // 使用防抖来避免频繁更新
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            updateLatestRecordText(this.value);
+        }, 1000); // 1秒后更新
+    });
+
     updateHistory();
 }); 
