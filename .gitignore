@@ -22,8 +22,8 @@ __pycache__/
 config.py
 
 # Temporary files
-# temp_audio.wav
-# *.wav
+temp_audio.wav
+*.wav
 
 # Distribution / packaging
 dist/
@@ -38,3 +38,6 @@ htmlcov/
 .cache
 coverage.xml
 *.cover 
+
+# mac
+.DS_Store

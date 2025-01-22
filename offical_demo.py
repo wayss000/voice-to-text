@@ -26,8 +26,8 @@ import websockets
 
 appid = "4673182595"    # 项目的 appid
 token = "9UwX58oSkTVpQVXV-1Uwok6tcQWPot8U"    # 项目的 token
-cluster = "xvolcengine_input_commonxx"  # 请求的集群
-audio_path = "temp_audio.wav"  # 本地音频路径
+cluster = "volcengine_input_common"  # 修改这里，使用正确的集群名称
+audio_path = "temp_audio_test.wav"  # 本地音频路径
 audio_format = "wav"   # wav 或者 mp3，根据实际音频格式设置
 
 PROTOCOL_VERSION = 0b0001
@@ -157,10 +157,13 @@ def parse_response(res):
 
 
 def read_wav_info(data: bytes = None) -> (int, int, int, int, int):
+    print("=== 开始读取WAV文件信息 ===")
     with BytesIO(data) as _f:
         wave_fp = wave.open(_f, 'rb')
         nchannels, sampwidth, framerate, nframes = wave_fp.getparams()[:4]
         wave_bytes = wave_fp.readframes(nframes)
+        print(f"音频信息: 声道数={nchannels}, 采样宽度={sampwidth}, 采样率={framerate}, 帧数={nframes}")
+        print(f"原始音频数据大小: {len(wave_bytes)} bytes")
     return nchannels, sampwidth, framerate, nframes, len(wave_bytes)
 
 class AudioType(Enum):
@@ -266,27 +269,41 @@ class AsrWsClient:
         return header_dicts
 
     async def segment_data_processor(self, wav_data: bytes, segment_size: int):
+        print("\n=== 开始处理音频数据 ===")
         reqid = str(uuid.uuid4())
         # 构建 full client request，并序列化压缩
         request_params = self.construct_request(reqid)
+        print(f"请求参数: {json.dumps(request_params, indent=2)}")
+        
         payload_bytes = str.encode(json.dumps(request_params))
         payload_bytes = gzip.compress(payload_bytes)
+        print(f"请求数据大小: 压缩后={len(payload_bytes)}bytes")
+        
         full_client_request = bytearray(generate_full_default_header())
         full_client_request.extend((len(payload_bytes)).to_bytes(4, 'big'))  # payload size(4 bytes)
         full_client_request.extend(payload_bytes)  # payload
+        
         header = None
         if self.auth_method == "token":
             header = self.token_auth()
         elif self.auth_method == "signature":
             header = self.signature_auth(full_client_request)
+        
+        print(f"\n=== 开始WebSocket连接 ===\nURL: {self.ws_url}")
         async with websockets.connect(self.ws_url, extra_headers=header, max_size=1000000000) as ws:
             # 发送 full client request
+            print("\n1. 发送初始请求...")
             await ws.send(full_client_request)
             res = await ws.recv()
+            print(f"收到初始响应: {res if isinstance(res, str) else res[:50].hex()}")
+            
             result = parse_response(res)
             if 'payload_msg' in result and result['payload_msg']['code'] != self.success_code:
                 return result
+            
+            print("\n2. 开始分片发送音频...")
             for seq, (chunk, last) in enumerate(AsrWsClient.slice_data(wav_data, segment_size), 1):
+                print(f"\n发送第{seq}个分片: size={len(chunk)}bytes, last={last}")
                 # if no compression, comment this line
                 payload_bytes = gzip.compress(chunk)
                 audio_only_request = bytearray(generate_audio_default_header())
@@ -294,16 +311,21 @@ class AsrWsClient:
                     audio_only_request = bytearray(generate_last_audio_default_header())
                 audio_only_request.extend((len(payload_bytes)).to_bytes(4, 'big'))  # payload size(4 bytes)
                 audio_only_request.extend(payload_bytes)  # payload
+                
                 # 发送 audio-only client request
                 await ws.send(audio_only_request)
                 res = await ws.recv()
+                print(f"分片响应: {res if isinstance(res, str) else res[:50].hex()}")
+                
                 result = parse_response(res)
                 if 'payload_msg' in result and result['payload_msg']['code'] != self.success_code:
                     return result
         return result
 
     async def execute(self):
+        print("\n=== 开始执行语音识别 ===")
         with open(self.audio_path, mode="rb") as _f:
+            print(f"从文件读取音频: {self.audio_path}")
             data = _f.read()
         audio_data = bytes(data)
         if self.format == "mp3":
@@ -315,6 +337,7 @@ class AsrWsClient:
             audio_data)
         size_per_sec = nchannels * sampwidth * framerate
         segment_size = int(size_per_sec * self.seg_duration / 1000)
+        print(f"计算分片大小: {segment_size} bytes (每片{self.seg_duration}ms)")
         return await self.segment_data_processor(audio_data, segment_size)
 
 
@@ -340,6 +363,9 @@ def execute_one(audio_item, cluster, **kwargs):
     return {"id": audio_id, "path": audio_path, "result": result}
 
 def test_one():
+    print("=== 语音识别程序启动 ===")
+    print(f"配置信息:\n  AppID: {appid}\n  Cluster: {cluster}\n  音频文件: {audio_path}")
+    
     result = execute_one(
         {
             'id': 1,
@@ -350,8 +376,13 @@ def test_one():
         token=token,
         format=audio_format,
     )
-    print(result)
+    print("\n=== 识别结果 ===")
+    respJson = json.dumps(result, indent=2, ensure_ascii=False)
+    print(respJson)
+    return respJson
 
 
 if __name__ == '__main__':
+    print("=== 语音识别程序启动 ===")
+    print(f"配置信息:\n  AppID: {appid}\n  Cluster: {cluster}\n  音频文件: {audio_path}")
     test_one()
