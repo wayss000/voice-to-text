@@ -2,13 +2,13 @@
 app:
   debug: true
   host: "0.0.0.0"
-  port: 5000
+  port: 5001
 
 # 火山引擎配置
 volc:
-  access_key: "9UwX560SkTVpQVXV-1Uwok6tcQWPOt8U"
-  secret_key: "pVC9Yfy8NyUO-3uRajGviQ_u0K8ZjZyj"
-  app_id: "4673284572"
+  access_key: "9UwX58oSkTVpQVXV-1Uwok6tcQWPot8U"
+  secret_key: "pvC9Yfy8QyUO-3uRajGviQ_uoK8ZjZyj"
+  app_id: "4673182595"
   cluster: "volcengine_input_common"
 
 # 其他配置项

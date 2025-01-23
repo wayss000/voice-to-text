@@ -40,3 +40,4 @@ coverage.xml
 
 # mac
 .DS_Store
+.vercel

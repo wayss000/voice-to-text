@@ -15,7 +15,10 @@ from enum import Enum
 from config import Config
 from datetime import datetime
 
-app = Flask(__name__)
+app = Flask(__name__,
+    template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates')),
+    static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static'))
+)
 
 # 使用 Config 类获取火山引擎配置
 VOLC_ACCESS_KEY = Config.get('volc.access_key')

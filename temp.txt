@@ -1,0 +1,45 @@
+curl https://get.acme.sh | sh -s email=wayss000@gmail.com
+./acme.sh --install -m wayss000@gmail.com
+
+# dns 模式
+acme.sh --issue --dns -d example.com -d www.example.com -d cp.example.com
+
+# nginx 模式
+acme.sh --issue --nginx -d example.com -d www.example.com -d cp.example.com
+acme.sh --issue --nginx -d wayss000.com -d v2t.wayss000.com
+
+
+lighthouse@VM-8-15-ubuntu:~$ .acme.sh/acme.sh --issue --nginx -d wayss000.com -d v2t.wayss000.com
+[Thu Jan 23 12:18:27 AM CST 2025] Using CA: https://acme.zerossl.com/v2/DV90
+[Thu Jan 23 12:18:28 AM CST 2025] Create account key ok.
+[Thu Jan 23 12:18:28 AM CST 2025] No EAB credentials found for ZeroSSL, let's get one
+[Thu Jan 23 12:18:31 AM CST 2025] Registering account: https://acme.zerossl.com/v2/DV90
+[Thu Jan 23 12:18:39 AM CST 2025] Registered
+[Thu Jan 23 12:18:39 AM CST 2025] ACCOUNT_THUMBPRINT='IMbaxTdoDXnAU7DzruksgGwXWtUoqI9VKM9rJ0PbKp4'
+[Thu Jan 23 12:18:39 AM CST 2025] Creating domain key
+[Thu Jan 23 12:18:39 AM CST 2025] The domain key is here: /home/lighthouse/.acme.sh/wayss000.com/wayss000.com.key
+[Thu Jan 23 12:18:39 AM CST 2025] Multi domain='DNS:wayss000.com,DNS:v2t.wayss000.com'
+[Thu Jan 23 12:18:39 AM CST 2025] Getting domain auth token for each domain
+[Thu Jan 23 12:18:48 AM CST 2025] Getting webroot for domain='wayss000.com'
+[Thu Jan 23 12:18:48 AM CST 2025] Getting webroot for domain='v2t.wayss000.com'
+[Thu Jan 23 12:18:48 AM CST 2025] Verifying: wayss000.com
+[Thu Jan 23 12:18:48 AM CST 2025] Nginx mode for domain:wayss000.com
+[Thu Jan 23 12:18:48 AM CST 2025] Can not find conf file for domain wayss000.com
+[Thu Jan 23 12:18:48 AM CST 2025] Please add '--debug' or '--log' to check more details.
+[Thu Jan 23 12:18:48 AM CST 2025] See: https://github.com/acmesh-official/acme.sh/wiki/How-to-debug-acme.sh
+lighthouse@VM-8-15-ubuntu:~$ 
+
+
+acme.sh --renew -d v2t.wayss000.com
+
+acme.sh --install-cert -d wayss000.com \
+--key-file       /path/to/keyfile/in/nginx/key.pem  \
+--fullchain-file /path/to/fullchain/nginx/cert.pem \
+--reloadcmd     "service nginx reload"
+
+
+我现在正在将改项目腾讯云上部署，但遇到了https的问题？因为没有https证书，浏览器不会给录音等权限。
+我现在的解决办法是安装ssl证书，然后使用nginx做代理。
+ssl证书我计划使用acme.sh来申请，但遇到了一些问题。
+我的域名在腾讯云托管，项目部署好后，我计划使用 v2t.wayss000.com 域名，它是我的二级域名。
+我希望你能帮我解决，同时，还需要其他信息，请你找我要。
