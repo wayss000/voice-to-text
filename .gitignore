@@ -41,3 +41,8 @@ coverage.xml
 # mac
 .DS_Store
 .vercel
+
+.node_modules/
+node_modules/
+
+.next/

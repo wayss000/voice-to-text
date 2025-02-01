@@ -363,9 +363,6 @@ def execute_one(audio_item, cluster, **kwargs):
     return {"id": audio_id, "path": audio_path, "result": result}
 
 def test_one():
-    print("=== 语音识别程序启动 ===")
-    print(f"配置信息:\n  AppID: {appid}\n  Cluster: {cluster}\n  音频文件: {audio_path}")
-    
     result = execute_one(
         {
             'id': 1,
@@ -376,13 +373,8 @@ def test_one():
         token=token,
         format=audio_format,
     )
-    print("\n=== 识别结果 ===")
-    respJson = json.dumps(result, indent=2, ensure_ascii=False)
-    print(respJson)
-    return respJson
+    return json.dumps(result, ensure_ascii=False)  # 只返回 JSON 字符串
 
 
 if __name__ == '__main__':
-    print("=== 语音识别程序启动 ===")
-    print(f"配置信息:\n  AppID: {appid}\n  Cluster: {cluster}\n  音频文件: {audio_path}")
-    test_one()
+    print(test_one())  # 只输出结果

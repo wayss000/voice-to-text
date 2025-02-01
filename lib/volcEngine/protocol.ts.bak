@@ -1,0 +1,130 @@
+// 从Python代码迁移的常量
+const PROTOCOL_VERSION = 0b0001
+const DEFAULT_HEADER_SIZE = 0b0001
+
+// 消息类型
+const CLIENT_FULL_REQUEST = 0b0001
+const CLIENT_AUDIO_ONLY_REQUEST = 0b0010
+const SERVER_FULL_RESPONSE = 0b1001
+const SERVER_ACK = 0b1011
+const SERVER_ERROR_RESPONSE = 0b1111
+
+// 消息序列标志
+const NO_SEQUENCE = 0b0000
+const NEG_SEQUENCE = 0b0010
+
+// 序列化方式
+const SERIALIZATION_NONE = 0b0000
+const SERIALIZATION_JSON = 0b0001
+const SERIALIZATION_THRIFT = 0b0011
+const SERIALIZATION_CUSTOM = 0b1111
+
+// 压缩方式
+const COMPRESSION_NONE = 0b0000
+const COMPRESSION_GZIP = 0b0001
+
+export function generateHeader(
+  messageType = CLIENT_FULL_REQUEST,
+  messageTypeSpecificFlags = NO_SEQUENCE,
+  serialMethod = SERIALIZATION_JSON,
+  compressionType = COMPRESSION_GZIP,
+  reservedData = 0x00,
+  extensionHeader = Buffer.from([])
+): Buffer {
+  const header = Buffer.alloc(4 + extensionHeader.length)
+  const headerSize = Math.floor(extensionHeader.length / 4) + 1
+  
+  header[0] = (PROTOCOL_VERSION << 4) | headerSize
+  header[1] = (messageType << 4) | messageTypeSpecificFlags
+  header[2] = (serialMethod << 4) | compressionType
+  header[3] = reservedData
+  
+  if (extensionHeader.length > 0) {
+    extensionHeader.copy(header, 4)
+  }
+  
+  return header
+}
+
+export function generateFullDefaultHeader(): Buffer {
+  return generateHeader()
+}
+
+export function generateAudioDefaultHeader(): Buffer {
+  return generateHeader(CLIENT_AUDIO_ONLY_REQUEST)
+}
+
+export function generateLastAudioDefaultHeader(): Buffer {
+  return generateHeader(
+    CLIENT_AUDIO_ONLY_REQUEST,
+    NEG_SEQUENCE
+  )
+}
+
+export interface ParsedResponse {
+  seq?: number
+  code?: number
+  payload_msg?: any
+  payload_size?: number
+}
+
+export function parseResponse(res: Buffer): ParsedResponse {
+  const protocolVersion = res[0] >> 4
+  const headerSize = res[0] & 0x0f
+  const messageType = res[1] >> 4
+  const messageTypeSpecificFlags = res[1] & 0x0f
+  const serializationMethod = res[2] >> 4
+  const messageCompression = res[2] & 0x0f
+  const reserved = res[3]
+  const headerExtensions = res.slice(4, headerSize * 4)
+  const payload = res.slice(headerSize * 4)
+  
+  const result: ParsedResponse = {}
+  let payloadMsg: any = null
+  let payloadSize = 0
+
+  if (messageType === SERVER_FULL_RESPONSE) {
+    payloadSize = payload.readInt32BE(0)
+    payloadMsg = payload.slice(4)
+  } else if (messageType === SERVER_ACK) {
+    const seq = payload.readInt32BE(0)
+    result.seq = seq
+    if (payload.length >= 8) {
+      payloadSize = payload.readUInt32BE(4)
+      payloadMsg = payload.slice(8)
+    }
+  } else if (messageType === SERVER_ERROR_RESPONSE) {
+    const code = payload.readUInt32BE(0)
+    result.code = code
+    payloadSize = payload.readUInt32BE(4)
+    payloadMsg = payload.slice(8)
+  }
+
+  if (payloadMsg === null) {
+    return result
+  }
+
+  if (messageCompression === COMPRESSION_GZIP) {
+    try {
+      const ungzip = require('pako').ungzip
+      payloadMsg = Buffer.from(ungzip(payloadMsg))
+    } catch (error) {
+      console.error('Failed to decompress payload:', error)
+      return result
+    }
+  }
+
+  if (serializationMethod === SERIALIZATION_JSON) {
+    try {
+      payloadMsg = JSON.parse(payloadMsg.toString('utf-8'))
+    } catch (error) {
+      console.error('Failed to parse JSON payload:', error)
+      return result
+    }
+  } else if (serializationMethod !== SERIALIZATION_NONE) {
+    payloadMsg = payloadMsg.toString('utf-8')
+  }
+
+  result.payload_msg = payloadMsg
+  result.payload_size = payloadSize
+  return result 

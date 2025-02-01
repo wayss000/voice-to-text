@@ -1,0 +1,59 @@
+.record-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+}
+
+.record-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 9999px;
+  background: #dc2626;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.record-button:hover {
+  background: #b91c1c;
+}
+
+.record-button.recording {
+  animation: pulse 2s infinite;
+}
+
+.record-icon {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: currentColor;
+}
+
+.record-time {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.record-tip {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+} 
