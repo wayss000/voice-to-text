@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, unlink } from 'fs/promises'
 import { join } from 'path'
-import { exec } from 'child_process'
-import { promisify } from 'util'
+import { VolcEngineClient } from '@/lib/volcEngine/client'
 
-const execAsync = promisify(exec)
+// 配置信息
+const config = {
+  appId: process.env.VOLC_APP_ID || "4673182595",
+  token: process.env.VOLC_TOKEN || "9UwX58oSkTVpQVXV-1Uwok6tcQWPot8U",
+  cluster: process.env.VOLC_CLUSTER || "volcengine_input_common"
+}
 
 export async function POST(request: NextRequest) {
   const tempPath = join(process.cwd(), 'temp_audio_test.wav')
@@ -25,27 +29,20 @@ export async function POST(request: NextRequest) {
     const audioBuffer = Buffer.from(arrayBuffer)
 
     // 添加调试日志
-    console.log('Audio file type:', audioFile.type)
-    console.log('Audio buffer size:', audioBuffer.length)
+    console.log('音频文件类型:', audioFile.type)
+    console.log('音频数据大小:', audioBuffer.length)
 
     // 保存临时文件
     await writeFile(tempPath, audioBuffer)
 
     try {
-      // 直接调用 Python 脚本
-      const { stdout, stderr } = await execAsync(`python api/offical_demo.py`)
-      
-      if (stderr) {
-        console.error('Python script error:', stderr)
-        throw new Error(stderr)
-      }
+      // 使用 TypeScript 实现的客户端
+      const client = new VolcEngineClient(config)
+      const text = await client.convertFile(tempPath)
 
-      // 获取最后一行（JSON 数据）
-      const lastLine = stdout.trim().split('\n').pop() || ''
-      const result = JSON.parse(lastLine)
       return NextResponse.json({
         success: true,
-        text: result.result.payload_msg.result[0].text,
+        text,
         timestamp: new Date().toISOString()
       })
 
@@ -54,12 +51,12 @@ export async function POST(request: NextRequest) {
       try {
         await unlink(tempPath)
       } catch (e) {
-        console.error('Failed to delete temp file:', e)
+        console.error('删除临时文件失败:', e)
       }
     }
 
   } catch (error) {
-    console.error('Conversion error:', error)
+    console.error('转换失败:', error)
     return NextResponse.json(
       { 
         success: false, 
