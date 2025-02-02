@@ -78,9 +78,8 @@ export class VolcEngineClient {
           'Authorization': `Bearer; ${this.config.token}`
         },
         rejectUnauthorized: false,
-        agent: false,  // 禁用代理
-        handshakeTimeout: 30000,  // 30秒超时
-        maxPayload: 100 * 1024 * 1024  // 100MB 最大负载
+        timeout: 30000,  // 添加超时设置
+        handshakeTimeout: 30000
       })
 
       // 设置二进制类型
