@@ -1,11 +1,37 @@
 import { WaveFile } from 'wavefile'
 
-export function readWavInfo(data: Buffer) {
-  const wav = new WaveFile(data)
-  return {
-    nchannels: wav.fmt.numChannels,
-    sampwidth: wav.fmt.bitsPerSample / 8,
-    framerate: wav.fmt.sampleRate
+// WaveFile 类型定义
+interface WaveFmt {
+  numChannels: number
+  bitsPerSample: number
+  sampleRate: number
+  numSamples: number  // 添加这个字段
+}
+
+interface WaveFileType {
+  fmt: WaveFmt
+}
+
+// WAV 信息读取函数
+export interface WavInfo {
+  nchannels: number
+  sampwidth: number
+  framerate: number
+  nframes: number
+}
+
+export function readWavInfo(data: Buffer): WavInfo {
+  try {
+    const wav = new WaveFile(data) as WaveFileType
+    return {
+      nchannels: wav.fmt.numChannels,
+      sampwidth: wav.fmt.bitsPerSample / 8,
+      framerate: wav.fmt.sampleRate,
+      nframes: wav.fmt.numSamples
+    }
+  } catch (error) {
+    console.error('读取WAV信息失败:', error)
+    throw error
   }
 }
 

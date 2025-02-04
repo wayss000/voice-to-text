@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import styles from './styles.module.css'
 
 interface HistoryItem {
@@ -16,6 +16,28 @@ interface HistoryListProps {
 }
 
 export function HistoryList({ items, onCopy }: HistoryListProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // 如果还没有挂载，返回一个占位结构
+  if (!mounted) {
+    return (
+      <div className={styles['history-section']}>
+        <div className={styles['history-header']}>
+          <h3>历史记录</h3>
+        </div>
+        <div className={styles['history-list']}>
+          <div className={styles['history-empty']}>
+            加载中...
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={styles['history-section']}>
       <div className={styles['history-header']}>

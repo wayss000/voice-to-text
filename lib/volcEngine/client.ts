@@ -6,10 +6,24 @@ import {
   generateFullDefaultHeader, 
   generateAudioDefaultHeader,
   generateLastAudioDefaultHeader,
-  parseResponse 
+  parseResponse,
+  ParsedResponse  // 导入类型
 } from './protocol'
 import type { Config, RequestParams } from './types'
 import WebSocket from 'ws'
+import { readWavInfo, WavInfo } from './utils'  // 导入工具函数
+
+// 添加 WaveFile 类型定义
+interface WaveFmt {
+  numChannels: number
+  bitsPerSample: number
+  sampleRate: number
+  numSamples: number
+}
+
+interface WaveFileType {
+  fmt: WaveFmt
+}
 
 export class VolcEngineClient {
   private readonly config: {
@@ -36,17 +50,17 @@ export class VolcEngineClient {
     // 1. 读取文件
     const audioData = await readFile(filePath)
     
-    // 2. 读取 WAV 信息
-    const { nchannels, sampwidth, framerate, nframes } = await this.readWavInfo(audioData)
-    console.log('音频信息:', { nchannels, sampwidth, framerate, nframes })
+    // 2. 读取 WAV 信息 - 使用工具函数
+    const wavInfo = await readWavInfo(audioData)
+    console.log('音频信息:', wavInfo)
     
     // 3. 计算分片大小
-    const sizePerSec = nchannels * sampwidth * framerate
+    const sizePerSec = wavInfo.nchannels * wavInfo.sampwidth * wavInfo.framerate
     const segmentSize = Math.floor(sizePerSec * this.config.segDuration / 1000)
     console.log('分片大小:', segmentSize)
 
     // 4. 处理音频数据
-    const result = await this.processAudioData(audioData, segmentSize)
+    const result = await this.processAudioData(audioData, segmentSize) as ParsedResponse
     
     // 5. 解析结果
     if (result.payload_msg?.code !== 1000) {
@@ -56,19 +70,27 @@ export class VolcEngineClient {
     return result.payload_msg?.result?.[0]?.text || ''
   }
 
-  private async readWavInfo(data: Buffer) {
-    try {
-      const wav = new WaveFile(data)
-      return {
-        nchannels: wav.fmt.numChannels,
-        sampwidth: wav.fmt.bitsPerSample / 8,
-        framerate: wav.fmt.sampleRate,
-        nframes: wav.fmt.numSamples
-      }
-    } catch (error) {
-      console.error('读取WAV信息失败:', error)
-      throw error
+  async convertBuffer(audioBuffer: Buffer): Promise<string> {
+    console.log('开始处理音频数据，大小:', audioBuffer.length)
+    
+    // 读取 WAV 信息
+    const wavInfo = await readWavInfo(audioBuffer)
+    console.log('音频信息:', wavInfo)
+    
+    // 计算分片大小
+    const sizePerSec = wavInfo.nchannels * wavInfo.sampwidth * wavInfo.framerate
+    const segmentSize = Math.floor(sizePerSec * this.config.segDuration / 1000)
+    console.log('分片大小:', segmentSize)
+
+    // 处理音频数据
+    const result = await this.processAudioData(audioBuffer, segmentSize) as ParsedResponse
+    
+    // 解析结果
+    if (result.payload_msg?.code !== 1000) {
+      throw new Error(result.payload_msg?.message || '转换失败')
     }
+
+    return result.payload_msg?.result?.[0]?.text || ''
   }
 
   private async processAudioData(audioData: Buffer, segmentSize: number) {
@@ -207,13 +229,17 @@ export class VolcEngineClient {
     }
   }
 
-  private *sliceData(data: Buffer, chunkSize: number): Generator<[Buffer, boolean]> {
-    const dataLen = data.length
-    let offset = 0
+  private sliceData(data: Buffer, chunkSize: number): Array<[Buffer, boolean]> {
+    const result: Array<[Buffer, boolean]> = [];
+    const dataLen = data.length;
+    let offset = 0;
+    
     while (offset + chunkSize < dataLen) {
-      yield [data.slice(offset, offset + chunkSize), false]
-      offset += chunkSize
+      result.push([data.slice(offset, offset + chunkSize), false]);
+      offset += chunkSize;
     }
-    yield [data.slice(offset, dataLen), true]
+    result.push([data.slice(offset, dataLen), true]);
+    
+    return result;
   }
 } 
