@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { AudioRecorder } from '@/components/AudioRecorder'
 import { ResultDisplay } from '@/components/ResultDisplay'
 import { HistoryList } from '@/components/HistoryList'
+import styles from '@/styles/Header.module.css'  // 导入样式
 
 interface HistoryItem {
   id: string
@@ -112,13 +113,11 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 标题区域 */}
-      <header className="w-full bg-white shadow-sm">
-        <div className="max-w-3xl mx-auto px-4">
-          <h1 className="text-3xl font-bold text-gray-900 text-center py-6">
-            语音转文字
-          </h1>
-        </div>
-      </header>
+      <div className={styles.container}>
+        <h1 className={styles.title}>
+          语音转文字
+        </h1>
+      </div>
 
       {/* 主要内容区域 */}
       <main className="container mx-auto px-4 py-8 max-w-full">
